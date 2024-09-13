@@ -1,16 +1,29 @@
 # React + TypeScript + Vite
-## โปรเจคนี้เป็นการเรียนรู้การใช้ React + TypeScript + Bun
+
+How to use
+1. git clone https://github.com/chayaphon-129/bun-react-app.git
+2. bun install
+3. bun dev
+4. open browser http://localhost:3000/
+
+
+
+
 หลักการออกแบบ
+
+
 
 1.ไฟล์ App.tsx คือ คอมโพเนนต์หลัก ของแอปพลิเคชันที่เราจะเรนเดอร์ลงใน DOM ผ่าน index.tsx
 -ทำหน้าที่ดึงข้อมูลจาก API (ในกรณีนี้คือ CoinDesk API) และแสดงผลข้อมูลในหน้าเว็บ
 -ใช้ React Hooks เช่น useEffect (สำหรับการดึงข้อมูลเมื่อคอมโพเนนต์ถูกเรนเดอร์) และ useState (สำหรับการเก็บข้อมูลที่ดึงมาและสถานะการโหลด)
 -เป็นศูนย์กลางของส่วนที่ผู้ใช้โต้ตอบ (UI) ในโปรเจค
 
+
+
 2.ประกาศ type ของตัวแปร
 
-```json
-{
+
+```
 interface CoindeskData {
   bpi: {
     USD: Bpi;
@@ -18,91 +31,103 @@ interface CoindeskData {
     EUR: Bpi;
   };
 }
-} 
 ```
-โดย setup คือคำถาม และ punchline คือ คำตอบ
-
-2. แสดงคำถาม(setup) 
-
-3. มีปุ่ม Answer เพื่อแสดงคำตอบ(punchline) ของคำถาม(setup) เมื่อกดที่ ปุ่ม Answer จะแสดงคำตอบของคำถามนั้นๆ
-4. มีปุ่ม Next Question เพื่อแสดงคำถามใหม่
 
 
-การทำงาน (file App.tsx)
+3.คอมโพเนนต์ App ใช้ useState สองตัวในการจัดการกับ:
+ข้อมูล (data) ที่ดึงมาจาก CoinDesk API ซึ่งเริ่มต้นเป็น null
+สถานะการโหลด (loading) ที่บอกว่าเรากำลังโหลดข้อมูลจาก API อยู่หรือไม่ โดยเริ่มต้นเป็น true
+เมื่อข้อมูลถูกดึงมาจาก API แล้ว เราจะใช้ setData เพื่ออัพเดตข้อมูลใน state และใช้ setLoading เพื่อบอกว่าเราดึงข้อมูลเสร็จแล้ว (เปลี่ยนจาก loading เป็น false)
 
-1. import useEffect และ useState
 
-useEffect สำหรับเรียกใช้งาน API เมื่อมีการใช้งาน App.tsx
-
-useState สำหรับ เก็บค่า json ที่เรียกได้จาก API
 ```
-import { useEffect, useState } from "react";
+const App: React.FC = () => {
+  const [data, setData] = useState<CoindeskData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+};
 ```
-2. ประกาศ type ของตัวแปร
+
+
+4.ฟังก์ชัน fetchData จะดึงข้อมูลราคาปัจจุบันของ Bitcoin จาก https://api.coindesk.com/v1/bpi/currentprice.json CoinDesk API โดยใช้ fetch.
+เมื่อได้ข้อมูลแล้วจะอัปเดต state ของ data (ซึ่งเก็บข้อมูล API) และเปลี่ยนสถานะ loading เป็น false เพื่อบอกว่าเสร็จสิ้นแล้ว.
+
+
 ```
-interface User {
-  type: string;
-  setup: string;
-  punchline: string;
-  id: number;
+const fetchData = () => {
+  fetch("https://api.coindesk.com/v1/bpi/currentprice.json")
+    .then((response) => response.json())
+    .then((data) => {
+      setData(data);
+      setLoading(false);
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+      setLoading(false);
+    });
+};
+```
+
+
+5.ใช้ useEffect เพื่อเรียกใช้งาน Function fetchData และฟังก์ชั่น interval setให้หน้าเว็บ Refresh เองทุกๆ 3 วินาที
+
+
+```
+useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 3000); // Refresh ทุก 3 วินาที
+    return () => clearInterval(interval); // Clear interval เมื่อ component unmount
+  }, []);
+```
+
+
+
+6.ไฟล์ src/index.tsx ไฟล์นี้เป็นไฟล์ที่ใช้สำหรับ เริ่มต้นแอปพลิเคชัน React และเรนเดอร์แอปลงใน DOM
+-ทำหน้าที่เชื่อมโยงระหว่าง React คอมโพเนนต์ (เช่น App) กับ DOM element จริง ๆ ที่เราจะนำไปแสดงผลในเบราว์เซอร์
+-ใน React 18 จะใช้ createRoot() แทนการใช้ ReactDOM.render() แบบเวอร์ชันก่อนหน้า
+
+
+```
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+
+const rootElement = document.getElementById("root");
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 }
 ```
 
-3. สร้างตัวแปร users สำหรับเก็บค่าที่ได้จากการเรียกใช้งาน API
-สร้างตัวแปร showAnswer สำหรับแสดงคำตอบ 
-```
-const [users, setUsers] = useState<User | null>(null);
-const [showAnswer, setShowAnswer] = useState(false);
-```
 
-4. สร้าง function fetchJoke สำหรับเรียก API จาก https://official-joke-api.appspot.com/random_joke โดยตั้งค่าให้ ตัวแปร data คือค่าที่ตอบกลับมาจาก API และ setUsers ให้มีค่าเท่ากับ data ดังนั้นจะได้ ค่าของตัวแปร users มีค่าเท่ากับ json ที่มาจากการเรียกใช้งาน API 
-```
-  const fetchJoke = async () => {    
-    const response = await fetch(
-      "https://official-joke-api.appspot.com/random_joke"
-    );
-    const data = await response.json();
-    setUsers(data);
-  };
-```
-5. ใช้ useEffect เพื่อเรียกใช้งาน function fetchJoke 
-```
-useEffect(() => {
-    fetchJoke();
-  }, []);
-  ```
-
-6. แสดงค่า setup(คำถาม) ที่เก็บอยู่ไม่รูปของ users.setup
-```
-      <h1>{users && users.setup}</h1>
-```
-
-7. แสดงปุ่ม Answer โดยเมื่อกดที่ปุ่มจะทำการเปลี่ยนค่า showAnswer จาก false (ตั้งค่าไว้ที่ข้อ 3.) เป็น true
-
-```
-        <button className="answer" onClick={() => setShowAnswer(!showAnswer)}>Answer</button>
-        
-        {/*  Show Answer */}
-        {showAnswer ? <p className="read-the-docs">{users && users.punchline}</p> : null}
-```
-
-8. แสดงปุ่ม Next Question โดยเมื่อกดที่ปุ่มจะทำการเรียนใช้งาน function fetchJoke หรือ ทำการเรียก API อีกรอบ เผื่อทำการเปลี่ยนคำถาม
-```
-<button onClick={() => fetchJoke()}>Next Question</button>
-```
-
-9. ในกรณีที่ showAnswer = true ให้แสดงคำตอบ(users.punchline) ของคำถามนั้นๆ
-```
-    {/*  Show Answer */}
-    {showAnswer ? <p className="read-the-docs">{users && users.punchline}</p> : null}
-```
+7.ไฟล์ public/index.html ไฟล์นี้คือไฟล์ HTML พื้นฐาน ของโปรเจค React ของคุณ
+จะเป็นไฟล์ที่เบราว์เซอร์โหลดครั้งแรกเมื่อผู้ใช้เข้าถึงเว็บแอปพลิเคชันของคุณ
+มี <div id="root"></div> ที่ทำหน้าที่เป็นจุดที่ React จะแทรกคอนเทนต์จาก App.tsx หรือไฟล์ที่เรา set api ไว้ลงไปแสดง
 
 
-
-
+```
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bun React App</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/src/index.tsx"></script>
+  </body>
+</html>
+```
 
 สมาชิก
 
-1. 66130030 จักรพันธ์ อัตลา
-2. 66130226 อรวรรณ  เห็นศิริศักด์
-3. 66130835 สุดารัตน์  ภู่ทอง
+1.ชยพล สุวรรณวร 66130918
+
+2.ตะวัน อันเตปุริก 61130301
+
+3.กิตติพงศ์ ใจชื้น 66130811
