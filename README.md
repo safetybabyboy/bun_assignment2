@@ -127,6 +127,8 @@ if (rootElement) {
 
 วิธีนำไฟล์ไปรันใน docker compose
 1.สร้างไฟล์ docker-compose.yaml
+
+```
 services:
   nginx:
     image: nginx:alpine
@@ -141,7 +143,7 @@ services:
 networks:
   mynetwork:
     driver: bridge
-
+```
 
 สมาชิก
 
