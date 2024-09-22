@@ -1,10 +1,10 @@
 # React + TypeScript + Vite
 
 How to use
-1. git clone https://github.com/chayaphon-129/bun-react-app.git
+1. git clone https://github.com/safetybabyboy/bun_assignment2
 2. bun install
-3. bun dev
-4. open browser http://localhost:3000/
+3. bun run build
+4. docker compose up -d
 
 
 
@@ -124,10 +124,29 @@ if (rootElement) {
 </html>
 ```
 
+
+วิธีนำไฟล์ไปรันใน docker compose
+1.สร้างไฟล์ docker-compose.yaml
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_wen_react
+    ports:
+      - "80:80"
+    volumes:
+      - ./dist:/usr/share/nginx/html
+    restart: always
+    networks:
+      - mynetwork
+networks:
+  mynetwork:
+    driver: bridge
+
+
 สมาชิก
 
 1.ชยพล สุวรรณวร 66130918
 
-2.ตะวัน อันเตปุริก 61130301
+2.ตะวัน อันเตปุริก 66130301
 
 3.กิตติพงศ์ ใจชื้น 66130811
