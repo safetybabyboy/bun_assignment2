@@ -14,7 +14,7 @@ interface CoindeskData {
   };
 }
 
-const App: React.FC = () => {
+function  App() {
   const [data, setData] = useState<CoindeskData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
